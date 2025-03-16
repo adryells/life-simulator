@@ -2,6 +2,7 @@ package com.lifesimulator.lifesimulator.services;
 
 import com.lifesimulator.lifesimulator.models.Player;
 import com.lifesimulator.lifesimulator.repositories.PlayerRepository;
+import com.lifesimulator.lifesimulator.util.RandomEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -67,21 +68,31 @@ public class GameService {
             System.out.println("[" + (i + 1) + "] " + players.get(i).getName() + " (ID: " + players.get(i).getId() + ")");
         }
 
-        int choice = -1;
-        while (choice < 1 || choice > players.size()) {
+        int choice;
+        while (true) {
             System.out.print("Enter a valid player number: ");
-            choice = scanner.nextInt();
-            if (choice >= 1 && choice <= players.size()) {
-                player = players.get(choice - 1);
-                if (player.isDead()){
-                    System.out.println("Invalid choice. Please try again.");
-                } else {
-                    System.out.println("Loaded player: " + player.getName());
-                }
-            } else {
-                System.out.println("Invalid choice. Please try again.");
+            if (!scanner.hasNextInt()) {
+                System.out.println("Invalid choice. Please enter a number.");
+                scanner.nextLine();
+                continue;
             }
+
+            choice = scanner.nextInt();
+            if (choice < 1 || choice > players.size()) {
+                System.out.println("Invalid choice. Please try again.");
+                continue;
+            }
+
+            player = players.get(choice - 1);
+            if (player.isDead()) {
+                System.out.println("Invalid choice. Player is dead. Please try again.");
+                continue;
+            }
+
+            System.out.println("Loaded player: " + player.getName());
+            break;
         }
+
     }
 
 
@@ -139,53 +150,9 @@ public class GameService {
     }
 
     private void handleRandomEvents(Player player) {
-        /*TODO:
-        Deve haver bem mais eventos.
-        Alguns eventos talvez só façam sentido em algumas faixas de idade.
-        Eventos INTERATIVOS.
-        Possivelmente Event se tornará uma tabela com EventType, EventStatus e tal.
-        Eventos em português indicam que o jogo está em português, futuramente ampliar para inglês e espanhol
-         */
-        String[] events = {
-                "Aconteceu um acidente, sua saúde diminuiu!", // Evento de perda de saúde
-                "Você teve uma doença fatal, morreu!", // Evento de morte
-                "Você fez novos amigos e ficou mais feliz!", // Evento de aumento de felicidade
-                "Você começou a estudar mais e seu IQ aumentou!", // Evento de aumento de IQ
-                "Você praticou exercícios e sua saúde aumentou!", // Evento de aumento de saúde
-                "Você passou por um momento difícil e sua felicidade diminuiu!", // Evento de perda de felicidade,
-                "Você teve um aumento de estresse devido ao trabalho!" // Evento para aumentar o estresse
-        };
-
-        String event = events[ThreadLocalRandom.current().nextInt(events.length)];
-
-        System.out.println("Event: " + event);
-
-        switch (event) {
-            case "Aconteceu um acidente, sua saúde diminuiu!":
-                player.setHealth(Math.max(0, player.getHealth() - ThreadLocalRandom.current().nextInt(5, 21)));
-                break;
-            case "Você teve uma doença fatal, morreu!":
-                player.setDead(true);
-                player.setHealth(0);
-                break;
-            case "Você fez novos amigos e ficou mais feliz!":
-                player.setHappyness(Math.min(100, player.getHappyness() + ThreadLocalRandom.current().nextInt(5, 16)));
-                break;
-            case "Você começou a estudar mais e seu IQ aumentou!":
-                player.setIq(Math.min(100, player.getIq() + ThreadLocalRandom.current().nextInt(3, 11)));
-                break;
-            case "Você praticou exercícios e sua saúde aumentou!":
-                player.setHealth(Math.min(100, player.getHealth() + ThreadLocalRandom.current().nextInt(3, 11)));
-                break;
-            case "Você passou por um momento difícil e sua felicidade diminuiu!":
-                player.setHappyness(Math.max(0, player.getHappyness() - ThreadLocalRandom.current().nextInt(5, 16)));
-                break;
-            case "Você teve um aumento de estresse devido ao trabalho!":
-                player.setStress(Math.min(100, player.getStress() + ThreadLocalRandom.current().nextInt(5, 15)));
-                break;
-        }
-
+        RandomEvent event = RandomEvent.values()[ThreadLocalRandom.current().nextInt(RandomEvent.values().length)];
+        System.out.println("Event: " + event.getMessage());
+        event.apply(player);
         playerRepository.save(player);
     }
-
 }
