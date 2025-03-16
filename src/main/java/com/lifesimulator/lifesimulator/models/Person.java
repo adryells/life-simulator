@@ -3,6 +3,8 @@ package com.lifesimulator.lifesimulator.models;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
@@ -24,6 +26,8 @@ public class Person {
     private Integer beauty;
     private int stress;
     private boolean isDead;
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Education> educationHistory = new ArrayList<>();
 
     public Person() {}
 
@@ -82,6 +86,14 @@ public class Person {
 
     public boolean isDead() {
         return isDead;
+    }
+
+    public void addEducation(Education education) {
+        this.educationHistory.add(education);
+    }
+
+    public List<Education> getEducationHistory() {
+        return educationHistory;
     }
 
     public void setDead(boolean isDead) {

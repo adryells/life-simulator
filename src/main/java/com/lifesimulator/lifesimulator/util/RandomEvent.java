@@ -18,13 +18,13 @@ public enum RandomEvent {
             player.setHealth(Math.max(0, player.getHealth() - ThreadLocalRandom.current().nextInt(5, 21)));
         }
     },
-    FATAL_DISEASE("Você teve uma doença fatal, morreu!") {
-        @Override
-        public void apply(Player player) {
-            player.setDead(true);
-            player.setHealth(0);
-        }
-    },
+//    FATAL_DISEASE("Você teve uma doença fatal, morreu!") {
+//        @Override
+//        public void apply(Player player) {
+//            player.setDead(true);
+//            player.setHealth(0);
+//        }
+//    },
     NEW_FRIENDS("Você fez novos amigos e ficou mais feliz!") {
         @Override
         public void apply(Player player) {

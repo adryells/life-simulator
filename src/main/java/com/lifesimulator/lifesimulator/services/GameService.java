@@ -20,6 +20,9 @@ public class GameService {
     @Autowired
     FamilyService familyService;
 
+    @Autowired
+    private EducationService educationService;
+
     private Player player;
 
     public void startGame(){
@@ -40,7 +43,7 @@ public class GameService {
                 return;
             }
             System.out.println("\n--- Year: " + player.getCurrentYear() + " ---");
-            System.out.println("Your age: " + (player.getCurrentYear() - player.getBirth().getYear()));
+            System.out.println("Your age: " + player.getAge());
             System.out.println("Choose an action:");
             System.out.println("[1] - Age Up a Year");
             System.out.println("[2] - Exit");
@@ -118,6 +121,7 @@ public class GameService {
 
     private void ageUp(Player player) {
         player.incrementYear();
+        educationService.checkEducationProgress(player);
         playerRepository.save(player);
         handleRandomEvents(player);
     }
