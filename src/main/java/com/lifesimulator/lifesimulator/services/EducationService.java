@@ -4,8 +4,10 @@ package com.lifesimulator.lifesimulator.services;
 import com.lifesimulator.lifesimulator.models.Education;
 import com.lifesimulator.lifesimulator.models.Player;
 import com.lifesimulator.lifesimulator.repositories.EducationRepository;
+import com.lifesimulator.lifesimulator.util.ConsoleUniversityCourseSelector;
 import com.lifesimulator.lifesimulator.util.EducationLevel;
 import com.lifesimulator.lifesimulator.util.UniversityCourse;
+import com.lifesimulator.lifesimulator.util.UniversityCourseSelector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,10 @@ public class EducationService {
 
     @Autowired
     private EducationRepository educationRepository;
+
+    private final Scanner scanner = new Scanner(System.in);
+
+    private UniversityCourseSelector courseSelector = new ConsoleUniversityCourseSelector();
 
     public void checkEducationProgress(Player player) {
         int age = player.getAge();
@@ -57,35 +63,11 @@ public class EducationService {
 
     private void chooseUniversity(Player player) {
         System.out.println("Apply to university? [Y/N]");
-        Scanner scanner = new Scanner(System.in);
         String wantsToStudy = scanner.nextLine();
 
         if (wantsToStudy.equalsIgnoreCase("Y")) {
-            System.out.println("Choose your course:");
             UniversityCourse[] courses = UniversityCourse.values();
-            for (int i = 0; i < courses.length; i++) {
-                System.out.println("[" + (i + 1) + "] " + courses[i]);
-            }
-
-            int courseChoice;
-            while (true) {
-                System.out.print("Enter a valid course number: ");
-                if (!scanner.hasNextInt()) {
-                    System.out.println("Invalid choice. Please enter a number.");
-                    scanner.nextLine();
-                    continue;
-                }
-
-                courseChoice = scanner.nextInt();
-                if (courseChoice < 1 || courseChoice > courses.length) {
-                    System.out.println("Invalid choice. Please try again.");
-                    continue;
-                }
-
-                break;
-            }
-
-            UniversityCourse chosenCourse = courses[courseChoice - 1];
+            UniversityCourse chosenCourse = courseSelector.selectCourse(courses);
             startEducation(player, EducationLevel.UNIVERSITY, "Federal University of " + player.getCountry());
             System.out.println("You enrolled in " + chosenCourse + ".");
         }

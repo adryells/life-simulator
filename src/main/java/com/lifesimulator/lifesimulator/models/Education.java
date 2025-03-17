@@ -32,8 +32,8 @@ public class Education {
         this.graduated = false;
     }
 
-    public double calculatePerformance(Player player) {
-        double finalPerformance = (player.getIq()) - (player.getStress() * 0.5);
+    public double calculatePerformance() {
+        double finalPerformance = this.player.getIq() - this.player.getStress() * 0.5;
 
         if (player.getStress() > 80) {
             finalPerformance *= 0.8;
@@ -46,14 +46,16 @@ public class Education {
 
     public void progressYear() {
         if (graduated) return;
-        yearsCompleted++;
-        performance = calculatePerformance(this.player);
+        performance = calculatePerformance();
         String status = "Aprovado!";
 
         if (performance < 50) {
-            yearsCompleted--;
             status = "Reprovado! Precisa refazer o ano.";
-        } else if (yearsCompleted == requiredYears()) {
+        }else{
+            yearsCompleted++;
+        }
+
+        if (yearsCompleted == requiredYears()) {
             graduated = true;
             System.out.println("Parabéns! Você se formou no nível " + level);
         }
