@@ -7,6 +7,7 @@ import com.lifesimulator.lifesimulator.models.RelationshipType;
 import com.lifesimulator.lifesimulator.repositories.PersonRepository;
 import com.lifesimulator.lifesimulator.repositories.RelationshipRepository;
 import com.lifesimulator.lifesimulator.repositories.RelationshipTypeRepository;
+import com.lifesimulator.lifesimulator.util.Gender;
 import net.datafaker.Faker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,8 +46,8 @@ public class FamilyService {
         int fatherAge = ThreadLocalRandom.current().nextInt(18, 71);
         LocalDate fatherBirth = subtractYearsRandomized(player.getBirth(), fatherAge);
 
-        Person mother = new Person(faker.name().fullName(), motherBirth, player.getCountry(), "Female");
-        Person father = new Person(faker.name().fullName(), fatherBirth, player.getCountry(), "Male");
+        Person mother = new Person(faker.name().fullName(), motherBirth, player.getCountry(), Gender.FEMALE);
+        Person father = new Person(faker.name().fullName(), fatherBirth, player.getCountry(), Gender.MALE);
 
         System.out.println("Mother: " + mother.getName() + " born in " + motherBirth);
         mother.generateInitialStats();
