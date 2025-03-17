@@ -18,6 +18,9 @@ public class Player extends Person {
     public int getCurrentYear() {
         return currentYear;
     }
+    public int getAge() {
+        return currentYear - this.getBirth().getYear();
+    }
 
     public void incrementYear() {
         this.currentYear++;
