@@ -1,5 +1,7 @@
 package com.lifesimulator.lifesimulator.models;
 
+import com.lifesimulator.lifesimulator.util.Country;
+import com.lifesimulator.lifesimulator.util.Gender;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -18,8 +20,8 @@ public class Person {
 
     private String name;
     private LocalDate birth;
-    private String country;
-    private String gender;
+    private Country country;
+    private Gender gender;
     private Integer happyness;
     private Integer health;
     private Integer iq;
@@ -31,7 +33,7 @@ public class Person {
 
     public Person() {}
 
-    public Person(String name, LocalDate birth, String country, String gender) {
+    public Person(String name, LocalDate birth, Country country, Gender gender) {
         this.name = name;
         this.birth = birth;
         this.country = country;
@@ -52,11 +54,11 @@ public class Person {
         return birth;
     }
 
-    public String getCountry() {
+    public Country getCountry() {
         return country;
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender;
     }
 
@@ -108,11 +110,11 @@ public class Person {
         this.birth = birth;
     }
 
-    public void setCountry(String country) {
+    public void setCountry(Country country) {
         this.country = country;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 

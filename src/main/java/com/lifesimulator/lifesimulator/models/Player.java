@@ -1,6 +1,9 @@
 package com.lifesimulator.lifesimulator.models;
 
+import com.lifesimulator.lifesimulator.util.Country;
+import com.lifesimulator.lifesimulator.util.Gender;
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 
 @Entity
@@ -10,7 +13,7 @@ public class Player extends Person {
 
     public Player() {}
 
-    public Player(String name, LocalDate birth, String country, String gender, int startYear) {
+    public Player(String name, LocalDate birth, Country country, Gender gender, int startYear) {
         super(name, birth, country, gender);
         this.currentYear = startYear;
     }

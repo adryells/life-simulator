@@ -3,6 +3,8 @@ package com.lifesimulator.lifesimulator.services;
 import com.lifesimulator.lifesimulator.models.Player;
 import com.lifesimulator.lifesimulator.repositories.PlayerRepository;
 import com.lifesimulator.lifesimulator.util.ActionEvent;
+import com.lifesimulator.lifesimulator.util.Country;
+import com.lifesimulator.lifesimulator.util.Gender;
 import com.lifesimulator.lifesimulator.util.RandomEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 
 @Service
 public class GameService {
@@ -146,27 +149,71 @@ public class GameService {
         }
 
     }
+    private <T> T promptForInput(Scanner scanner, Runnable prePrompt, String prompt, Function<String, T> converter, String errorMessage) {
+        T result = null;
+        while (result == null) {
+            prePrompt.run();
+            System.out.println(prompt);
+            String input = scanner.nextLine().trim();
+            result = converter.apply(input);
+            if (result == null) {
+                System.out.println(errorMessage);
+            }
+        }
+        return result;
+    }
 
+    private LocalDate promptForBirthDate(Scanner scanner) {
+        LocalDate birthDate = null;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        while (birthDate == null) {
+            System.out.println("Type your birth date in format: dd-MM-yyyy ");
+            String birth = scanner.nextLine().trim();
+            try {
+                birthDate = LocalDate.parse(birth, formatter);
+            } catch (Exception e) {
+                System.out.println("Invalid date format, try again.");
+            }
+        }
+        return birthDate;
+    }
+
+    private Gender promptForGender(Scanner scanner){
+        return promptForInput(
+                scanner,
+                () -> {},
+                "Type your gender: [M] - Male | [F] - Female | [N] - Non-binary | [O] - Other",
+                Gender::fromString,
+                "Invalid gender, try again."
+        );
+    }
+
+    private Country promptForCountry(Scanner scanner){
+        return promptForInput(scanner,
+                () -> {
+                    System.out.println("Type your country from the list below:");
+                    Country.printAvailableCountries();
+                },
+                "Enter your country:",
+                Country::fromString,
+                "Invalid country, try again."
+        );
+    }
 
     private void createNewPlayer(Scanner scanner) {
         System.out.println("Type your name: ");
-        String name = scanner.nextLine();
-        System.out.println("Type your gender: [M] - Male [F] - Female");
-        String gender = scanner.nextLine();
-        System.out.println("Type your country: [1] - Brazil [2] - Argentina [3] - Uruguay [4] - Chile");
-        String country = scanner.nextLine();
-        System.out.println("Type your birth date in format: dd-MM-yyyy ");
-        String birth = scanner.nextLine();
+        String name = scanner.nextLine().trim();
+        Gender gender = promptForGender(scanner);
+        Country country = promptForCountry(scanner);
+        LocalDate birthDate = promptForBirthDate(scanner);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        LocalDate birthDate = LocalDate.parse(birth, formatter);
         int startYear = birthDate.getYear();
-
         player = new Player(name, birthDate, country, gender, startYear);
         player.generateInitialStats();
         playerRepository.save(player);
         familyService.generateFamily(player);
     }
+
 
     private void ageUp(Player player) {
         player.incrementYear();
