@@ -2,6 +2,7 @@ package com.lifesimulator.lifesimulator.services;
 
 import com.lifesimulator.lifesimulator.models.Player;
 import com.lifesimulator.lifesimulator.repositories.PlayerRepository;
+import com.lifesimulator.lifesimulator.util.ActionEvent;
 import com.lifesimulator.lifesimulator.util.RandomEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,9 +26,12 @@ public class GameService {
 
     private Player player;
 
+    private final Scanner scanner = new Scanner(System.in);
+
+    int actionsPerformedThisYear = 0;
+
     public void startGame(){
         System.out.println("Starting game...");
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Would you like to load a saved game? [Y/N]");
         String loadChoice = scanner.nextLine();
 
@@ -38,26 +42,71 @@ public class GameService {
         }
 
         while (true) {
-            if (player.isDead()){
+            if (player.isDead()) {
                 System.out.println("O jogador " + player.getName() + " está morto.");
                 return;
             }
+
             System.out.println("\n--- Year: " + player.getCurrentYear() + " ---");
             System.out.println("Your age: " + player.getAge());
             System.out.println("Choose an action:");
             System.out.println("[1] - Age Up a Year");
-            System.out.println("[2] - Exit");
+            System.out.println("[2] - Actions");
+            System.out.println("[3] - Exit");
 
             int choice = scanner.nextInt();
+
             if (choice == 1) {
                 ageUp(player);
                 updateStats(player);
-            } else {
+            } else if (choice == 2) {
+                actions();
+            } else if (choice == 3) {
                 break;
+            } else {
+                System.out.println("Invalid option, try again.");
             }
         }
     }
 
+    private int readIntInput(String prompt) {
+        System.out.println(prompt);
+        while (!scanner.hasNextInt()) {
+            System.out.println("Invalid choice. Please enter a number.");
+            scanner.nextLine();
+        }
+        return scanner.nextInt();
+    }
+
+    private void actions() {
+        ActionEvent[] actions = ActionEvent.values();
+        if (actionsPerformedThisYear >= 2) {
+            System.out.println("Já atingiu as 2 ações anuais, volte no próximo ano!");
+            return;
+        }
+
+        while (actionsPerformedThisYear < 2) {
+            System.out.println("Choose an action: \n[0] EXIT ");
+            for (int i = 0; i < actions.length; i++) {
+                System.out.println("[" + (i + 1) + "] " + actions[i]);
+            }
+
+            int actionChoice = readIntInput("Your choice:");
+
+            if (actionChoice == 0) {
+                break;
+            }
+            if (actionChoice > actions.length) {
+                System.out.println("Invalid choice. Please try again.");
+                continue;
+            }
+
+            actionsPerformedThisYear++;
+            ActionEvent action = actions[actionChoice - 1];
+            action.apply(player);
+            System.out.println("Event: " + action.getMessage());
+        }
+    }
 
     private void loadPlayer(Scanner scanner) {
         List<Player> players = playerRepository.findAll();
@@ -121,6 +170,7 @@ public class GameService {
 
     private void ageUp(Player player) {
         player.incrementYear();
+        actionsPerformedThisYear = 0;
         educationService.checkEducationProgress(player);
         playerRepository.save(player);
         handleRandomEvents(player);
