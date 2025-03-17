@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 
 @Service
 public class GameService {
@@ -148,47 +149,65 @@ public class GameService {
         }
 
     }
-
-
-    private void createNewPlayer(Scanner scanner) {
-        System.out.println("Type your name: ");
-        String name = scanner.nextLine().trim();
-
-        Gender gender = null;
-        while (gender == null) {
-            System.out.println("Type your gender: [M] - Male | [F] - Female | [N] - Non-binary | [O] - Other");
-            String genderInput = scanner.nextLine().trim();
-            gender = Gender.fromString(genderInput);
-            if (gender == null) {
-                System.out.println("Invalid gender, try again.");
+    private <T> T promptForInput(Scanner scanner, Runnable prePrompt, String prompt, Function<String, T> converter, String errorMessage) {
+        T result = null;
+        while (result == null) {
+            prePrompt.run();
+            System.out.println(prompt);
+            String input = scanner.nextLine().trim();
+            result = converter.apply(input);
+            if (result == null) {
+                System.out.println(errorMessage);
             }
         }
+        return result;
+    }
 
-        Country country = null;
-        while (country == null) {
-            System.out.println("Type your country from the list below:");
-            Country.printAvailableCountries();
-            String countryInput = scanner.nextLine().trim();
-            country = Country.fromString(countryInput);
-            if (country == null) {
-                System.out.println("Invalid country, try again.");
-            }
-        }
-
+    private LocalDate promptForBirthDate(Scanner scanner) {
         LocalDate birthDate = null;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         while (birthDate == null) {
             System.out.println("Type your birth date in format: dd-MM-yyyy ");
             String birth = scanner.nextLine().trim();
             try {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 birthDate = LocalDate.parse(birth, formatter);
             } catch (Exception e) {
                 System.out.println("Invalid date format, try again.");
             }
         }
+        return birthDate;
+    }
+
+    private Gender promptForGender(Scanner scanner){
+        return promptForInput(
+                scanner,
+                () -> {},
+                "Type your gender: [M] - Male | [F] - Female | [N] - Non-binary | [O] - Other",
+                Gender::fromString,
+                "Invalid gender, try again."
+        );
+    }
+
+    private Country promptForCountry(Scanner scanner){
+        return promptForInput(scanner,
+                () -> {
+                    System.out.println("Type your country from the list below:");
+                    Country.printAvailableCountries();
+                },
+                "Enter your country:",
+                Country::fromString,
+                "Invalid country, try again."
+        );
+    }
+
+    private void createNewPlayer(Scanner scanner) {
+        System.out.println("Type your name: ");
+        String name = scanner.nextLine().trim();
+        Gender gender = promptForGender(scanner);
+        Country country = promptForCountry(scanner);
+        LocalDate birthDate = promptForBirthDate(scanner);
 
         int startYear = birthDate.getYear();
-
         player = new Player(name, birthDate, country, gender, startYear);
         player.generateInitialStats();
         playerRepository.save(player);
