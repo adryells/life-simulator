@@ -8,6 +8,16 @@ public class Job {
 
     public Job(){}
 
+    public Job(String title, JobType type, Double hourlyWage, Integer minAge, Job requiredPreviousJob, Integer requiredPreviousYearsExperience, Company company){
+        this.title=title;
+        this.type=type;
+        this.hourlyWage=hourlyWage;
+        this.minAge=minAge;
+        this.requiredPreviousJob=requiredPreviousJob;
+        this.requiredPreviousYearsExperience=requiredPreviousYearsExperience;
+        this.company=company;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -9,12 +9,22 @@ public class PersonJob {
 
     public PersonJob(){}
 
+    public PersonJob(Player player, Job job, Double hourlyWage, Integer hoursPerWeek, LocalDate startDate){
+        this.player=player; // TODO: Must be person, i'll refact
+        this.job=job;
+        this.performance=0;
+        this.hourlyWage=hourlyWage;
+        this.hoursPerWeek=hoursPerWeek;
+        this.startDate=startDate;
+        this.yearsInJob=0.0;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    private Person person;
+    private Player player;
 
     @ManyToOne
     private Job job;
@@ -63,8 +73,8 @@ public class PersonJob {
         return performance;
     }
 
-    public Person getPerson() {
-        return person;
+    public Person getPlayer() {
+        return player;
     }
 
     public void setHourlyWage(Double hourlyWage) {
@@ -95,11 +105,27 @@ public class PersonJob {
         this.performance = performance;
     }
 
-    public void setPerson(Person person) {
-        this.person = person;
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 
     public void setYearsInJob(Double yearsInJob) {
         this.yearsInJob = yearsInJob;
     }
+
+    public void calculatePerformance() {
+        double happiness = player.getHappyness() != null ? player.getHappyness() : 0;
+        double health = player.getHealth() != null ? player.getHealth() : 0;
+        double iq = player.getIq() != null ? player.getIq() : 0;
+        double stress = player.getStress();
+
+        double averageAttributes = (happiness + health + iq) / 3.0;
+        double stressFactor = 1 - (stress / 100.0);
+        double jobExperienceBonus = this.yearsInJob * 2.0;
+
+        double rawPerformance = (averageAttributes * stressFactor) + jobExperienceBonus;
+
+        this.performance = (int) Math.max(0, Math.min(100, rawPerformance));
+    }
+
 }

@@ -1,10 +1,11 @@
 package com.lifesimulator.lifesimulator.repositories;
 
 import com.lifesimulator.lifesimulator.models.PersonJob;
+import com.lifesimulator.lifesimulator.models.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.util.Optional;
 
 public interface PersonJobRepository extends JpaRepository<PersonJob, Long> {
-    List<PersonJob> findByPersonId(Long personId);
+    Optional<PersonJob> findFirstByPlayerAndEndDateIsNullOrderByStartDateDesc(Player player);
 }
