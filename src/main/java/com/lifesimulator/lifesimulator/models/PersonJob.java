@@ -73,7 +73,7 @@ public class PersonJob {
         return performance;
     }
 
-    public Person getPlayer() {
+    public Player getPlayer() {
         return player;
     }
 
