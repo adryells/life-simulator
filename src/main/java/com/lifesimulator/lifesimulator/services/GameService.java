@@ -155,11 +155,7 @@ public class GameService {
                 case 1 -> ageUp();
                 case 2 -> goToActions();
                 case 3 -> goToWork();
-                case 4 -> {
-                    // TODO: Implement gracefull shutdown
-                    System.out.println("Bye bye!");
-                    System.exit(0);
-                }
+                case 4 -> { throw new RuntimeException("Bye bye, game ending..."); }
                 default -> System.out.println("Invalid option, try again.");
             }
         }
