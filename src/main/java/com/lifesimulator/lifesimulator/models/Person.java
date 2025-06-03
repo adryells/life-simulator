@@ -158,10 +158,10 @@ public class Person {
         iq = ThreadLocalRandom.current().nextInt(0, 101);
         beauty = ThreadLocalRandom.current().nextInt(0, 101);
 
-        getStats();
+        printStats();
     }
 
-    public void getStats() {
+    public void printStats() {
         System.out.printf(
                 "%s | IQ=%d Beauty=%d Happyness=%d Health=%d Stress=%d.\n",
                 this.getName(), this.getIq(), this.getBeauty(), this.getHappyness(), this.getHealth(), this.getStress()

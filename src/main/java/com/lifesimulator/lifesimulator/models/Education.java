@@ -21,7 +21,8 @@ public class Education {
     private double performance;
     private boolean graduated;
 
-    public Education() {}
+    public Education() {
+    }
 
     public Education(Player player, EducationLevel level, String institution) {
         this.player = player;
@@ -42,16 +43,15 @@ public class Education {
         return Math.max(0, finalPerformance);
     }
 
-
-
     public void progressYear() {
         if (graduated) return;
+
         performance = calculatePerformance();
-        String status = "Aprovado!";
+        var status = "Aprovado!";
 
         if (performance < 50) {
             status = "Reprovado! Precisa refazer o ano.";
-        }else{
+        } else {
             yearsCompleted++;
         }
 
@@ -59,6 +59,7 @@ public class Education {
             graduated = true;
             System.out.println("Parabéns! Você se formou no nível " + level);
         }
+
         System.out.println(status);
         System.out.printf("Anos completos: %d ", yearsCompleted);
         System.out.printf("Sua performance: %f ", performance);
