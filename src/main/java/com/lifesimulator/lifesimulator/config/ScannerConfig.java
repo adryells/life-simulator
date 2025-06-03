@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 @Configuration
 public class ScannerConfig {
-    @Bean
+    @Bean(destroyMethod = "close")
     public Scanner scanner() {
         return new Scanner(System.in);
     }
