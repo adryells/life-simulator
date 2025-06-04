@@ -9,6 +9,8 @@ import com.lifesimulator.lifesimulator.util.ActionEvent;
 import com.lifesimulator.lifesimulator.util.Country;
 import com.lifesimulator.lifesimulator.util.Gender;
 import com.lifesimulator.lifesimulator.util.RandomEvent;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -36,11 +38,13 @@ public class GameService {
 
     private final EducationService educationService;
 
+    private final ApplicationContext applicationContext;
+
     private Player player;
 
     private int actionsPerformedThisYear = 0; // TODO: Must be in database
 
-    public GameService(final Scanner scanner, final PlayerRepository playerRepository, final JobRepository jobRepository, final CompanyRepository companyRepository, final PersonJobRepository personJobRepository, final FamilyService familyService, final EducationService educationService) {
+    public GameService(final Scanner scanner, final PlayerRepository playerRepository, final JobRepository jobRepository, final CompanyRepository companyRepository, final PersonJobRepository personJobRepository, final FamilyService familyService, final EducationService educationService, final ApplicationContext applicationContext) {
         this.scanner = scanner;
         this.playerRepository = playerRepository;
         this.jobRepository = jobRepository;
@@ -48,6 +52,7 @@ public class GameService {
         this.personJobRepository = personJobRepository;
         this.familyService = familyService;
         this.educationService = educationService;
+        this.applicationContext = applicationContext;
     }
 
     // TODO: This function must be in a util package or something like that
@@ -155,7 +160,10 @@ public class GameService {
                 case 1 -> ageUp();
                 case 2 -> goToActions();
                 case 3 -> goToWork();
-                case 4 -> { throw new RuntimeException("Bye bye, game ending..."); }
+                case 4 -> {
+                    System.out.println("Bye Bye, see you later!");
+                    System.exit(SpringApplication.exit(applicationContext, () -> 1));
+                }
                 default -> System.out.println("Invalid option, try again.");
             }
         }
