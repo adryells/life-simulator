@@ -4,57 +4,65 @@ package com.lifesimulator.lifesimulator.services;
 import com.lifesimulator.lifesimulator.models.Education;
 import com.lifesimulator.lifesimulator.models.Player;
 import com.lifesimulator.lifesimulator.repositories.EducationRepository;
-import com.lifesimulator.lifesimulator.util.ConsoleUniversityCourseSelector;
 import com.lifesimulator.lifesimulator.util.EducationLevel;
 import com.lifesimulator.lifesimulator.util.UniversityCourse;
 import com.lifesimulator.lifesimulator.util.UniversityCourseSelector;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
+record EducationAge(int yearsCompleted, EducationLevel educationLevel){}
 
 @Service
 public class EducationService {
+    private final Scanner scanner;
+    private final EducationRepository educationRepository;
+    private final UniversityCourseSelector courseSelector;
 
-    @Autowired
-    private EducationRepository educationRepository;
+    EducationService(final Scanner scanner, final EducationRepository educationRepository, final UniversityCourseSelector courseSelector) {
+        this.scanner = scanner;
+        this.courseSelector = courseSelector;
+        this.educationRepository = educationRepository;
+    }
 
-    private final Scanner scanner = new Scanner(System.in);
+    public void checkEducationProgress(final Player player) {
+        final var age = player.getAge();
+        final var educationHistory = player.getEducationHistory();
+        assert educationHistory != null;
 
-    private UniversityCourseSelector courseSelector = new ConsoleUniversityCourseSelector();
+        final var currentEducation = Optional
+                .of(educationHistory)
+                .filter(l -> !l.isEmpty())
+                .map(List::getLast);
 
-    public void checkEducationProgress(Player player) {
-        int age = player.getAge();
-        List<Education> educationHistory = player.getEducationHistory();
+        final var pair = currentEducation
+                .map(e -> new EducationAge(e.getYearsCompleted(), e.getLevel()))
+                .orElse(new EducationAge(0, EducationLevel.NONE));
 
-        Education currentEducation = educationHistory.isEmpty() ? null : educationHistory.get(educationHistory.size() - 1);
+        final boolean graduated = currentEducation.map(Education::isGraduated).orElse(false);
 
-        if (age == 6 && (currentEducation == null || currentEducation.getLevel() != EducationLevel.ELEMENTARY)) {
-            startEducation(player, EducationLevel.ELEMENTARY, "Escola Primária");
+        switch (pair) {
+            case EducationAge(_, var x) when age == 6 && x != EducationLevel.ELEMENTARY
+                    -> startEducation(player, EducationLevel.ELEMENTARY, "Escola Primária");
+            case EducationAge(var a, var x) when a > 9 && x == EducationLevel.ELEMENTARY && graduated
+                    -> startEducation(player, EducationLevel.HIGH_SCHOOL, "Escola Secundária");
+            case EducationAge(var a, var x) when a > 3 && x == EducationLevel.HIGH_SCHOOL && graduated
+                    -> chooseUniversity(player);
+            // NOTE: Java is dumb and requires a default
+            default -> { }
         }
 
-        if (currentEducation != null && currentEducation.getLevel() == EducationLevel.ELEMENTARY) {
-            if (currentEducation.getYearsCompleted() >= 9 && currentEducation.isGraduated()) {
-                startEducation(player, EducationLevel.HIGH_SCHOOL, "Escola Secundária");
-            }
-        }
-
-        if (currentEducation != null && currentEducation.getLevel() == EducationLevel.HIGH_SCHOOL) {
-            if (currentEducation.getYearsCompleted() >= 3 && currentEducation.isGraduated()) {
-                chooseUniversity(player);
-            }
-        }
         if (age > 6){
-            for (Education edu : educationHistory) {
+            for (var edu : educationHistory) {
                 edu.progressYear();
                 educationRepository.save(edu);
             }
         }
     }
 
-    private void startEducation(Player player, EducationLevel level, String institution) {
+    private void startEducation(final Player player, final EducationLevel level, final String institution) {
         Education newEducation = new Education(player, level, institution);
         player.addEducation(newEducation);
         educationRepository.save(newEducation);

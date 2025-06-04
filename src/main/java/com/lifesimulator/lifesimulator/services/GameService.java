@@ -9,7 +9,8 @@ import com.lifesimulator.lifesimulator.util.ActionEvent;
 import com.lifesimulator.lifesimulator.util.Country;
 import com.lifesimulator.lifesimulator.util.Gender;
 import com.lifesimulator.lifesimulator.util.RandomEvent;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,31 +24,38 @@ import java.util.function.Function;
 
 @Service
 public class GameService {
-    @Autowired
-    PlayerRepository playerRepository;
+    private final Scanner scanner;
 
-    @Autowired
-    JobRepository jobRepository;
+    private final PlayerRepository playerRepository;
 
-    @Autowired
-    CompanyRepository companyRepository;
+    private final JobRepository jobRepository;
 
-    @Autowired
-    PersonJobRepository personJobRepository;
+    private final CompanyRepository companyRepository;
 
-    @Autowired
-    FamilyService familyService;
+    private final PersonJobRepository personJobRepository;
 
-    @Autowired
-    private EducationService educationService;
+    private final FamilyService familyService;
+
+    private final EducationService educationService;
+
+    private final ApplicationContext applicationContext;
 
     private Player player;
 
-    private final Scanner scanner = new Scanner(System.in); // TODO: Must be the unique scanner in the app
+    private int actionsPerformedThisYear = 0; // TODO: Must be in database
 
-    int actionsPerformedThisYear = 0; // TODO: Must be in database
+    public GameService(final Scanner scanner, final PlayerRepository playerRepository, final JobRepository jobRepository, final CompanyRepository companyRepository, final PersonJobRepository personJobRepository, final FamilyService familyService, final EducationService educationService, final ApplicationContext applicationContext) {
+        this.scanner = scanner;
+        this.playerRepository = playerRepository;
+        this.jobRepository = jobRepository;
+        this.companyRepository = companyRepository;
+        this.personJobRepository = personJobRepository;
+        this.familyService = familyService;
+        this.educationService = educationService;
+        this.applicationContext = applicationContext;
+    }
 
-    // This function must be in a util package or something like that
+    // TODO: This function must be in a util package or something like that
     private int readIntInput(String prompt) {
         System.out.println(prompt);
         while (!scanner.hasNextInt()) {
@@ -57,7 +65,7 @@ public class GameService {
         return scanner.nextInt();
     }
 
-    // This function must be in a util package or something like that
+    // TODO: This function must be in a util package or something like that
     private <T> T promptForInput(Scanner scanner, Runnable prePrompt, String prompt, Function<String, T> converter, String errorMessage) {
         T result = null;
         while (result == null) {
@@ -72,9 +80,10 @@ public class GameService {
         return result;
     }
 
-    private LocalDate promptForBirthDate(Scanner scanner) {
+    private LocalDate promptForBirthDate() {
         LocalDate birthDate = null;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        final var formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
         while (birthDate == null) {
             System.out.println("Type your birth date in format: dd-MM-yyyy ");
             String birth = scanner.nextLine().trim();
@@ -84,10 +93,11 @@ public class GameService {
                 System.out.println("Invalid date format, try again.");
             }
         }
+
         return birthDate;
     }
 
-    private Gender promptForGender(Scanner scanner) {
+    private Gender promptForGender() {
         return promptForInput(
                 scanner,
                 () -> {
@@ -98,7 +108,7 @@ public class GameService {
         );
     }
 
-    private Country promptForCountry(Scanner scanner) {
+    private Country promptForCountry() {
         return promptForInput(scanner,
                 () -> {
                     System.out.println("Type your country from the list below:");
@@ -111,8 +121,8 @@ public class GameService {
     }
 
     // Maybe this function also must be in another package (like "event" package?)
-    private void handleRandomEvents(Player player) {
-        RandomEvent event = RandomEvent.values()[ThreadLocalRandom.current().nextInt(RandomEvent.values().length)];
+    private void handleRandomEvents() {
+        final var event = RandomEvent.values()[ThreadLocalRandom.current().nextInt(RandomEvent.values().length)];
         System.out.println("Event: " + event.getMessage());
         event.apply(player);
         playerRepository.save(player);
@@ -125,9 +135,9 @@ public class GameService {
 
         // Must accept "yes" as valid answer
         if (loadChoice.equalsIgnoreCase("Y")) {
-            loadPlayer(scanner);
+            loadPlayer();
         } else {
-            createNewPlayer(scanner);
+            createNewPlayer();
         }
 
         while (true) {
@@ -146,22 +156,22 @@ public class GameService {
 
             int choice = scanner.nextInt();
 
-            if (choice == 1) {
-                ageUp(player);
-            } else if (choice == 2) {
-                goToActions();
-            } else if (choice == 3) {
-                goToWork();
-            }else if (choice == 4) {
-                break;
-            } else {
-                System.out.println("Invalid option, try again.");
+            switch (choice) {
+                case 1 -> ageUp();
+                case 2 -> goToActions();
+                case 3 -> goToWork();
+                case 4 -> {
+                    System.out.println("Bye Bye, see you later!");
+                    System.exit(SpringApplication.exit(applicationContext, () -> 1));
+                }
+                default -> System.out.println("Invalid option, try again.");
             }
         }
     }
 
-    private void loadPlayer(Scanner scanner) {
-        List<Player> players = playerRepository.findAll();
+    private void loadPlayer() {
+        final var players = playerRepository.findAll();
+
         if (players.isEmpty()) {
             System.out.println("No saved players found.");
             return;
@@ -199,16 +209,17 @@ public class GameService {
 
     }
 
-    private void createNewPlayer(Scanner scanner) {
+    private void createNewPlayer() {
         System.out.println("Type your name: ");
-        String name = scanner.nextLine().trim();
-        Gender gender = promptForGender(scanner);
-        Country country = promptForCountry(scanner);
-        LocalDate birthDate = promptForBirthDate(scanner);
+        final var name = scanner.nextLine().trim();
+        final var gender = promptForGender();
+        final var country = promptForCountry();
+        final var birthDate = promptForBirthDate();
+        final int startYear = birthDate.getYear();
 
-        int startYear = birthDate.getYear();
         player = new Player(name, birthDate, country, gender, startYear);
         player.generateInitialStats();
+
         playerRepository.save(player);
         familyService.generateFamily(player);
     }
@@ -390,36 +401,42 @@ public class GameService {
         }
     }
 
-    private void ageUp(Player player) {
+    private void ageUp() {
         player.incrementYear();
         actionsPerformedThisYear = 0; // Must be in database
         educationService.checkEducationProgress(player);
         playerRepository.save(player);
-        updateWorkStats(player);
-        handleRandomEvents(player);
-        updateStats(player);
+
+        updateWorkStats();
+        handleRandomEvents();
+        updateStats();
     }
 
-    private void updateWorkStats(Player player){
-        Optional<PersonJob> optionalPersonJob = personJobRepository.findFirstByPlayerAndEndDateIsNullOrderByStartDateDesc(player);
+    private void updateWorkStats(){
+        final var optionalPersonJob = personJobRepository.findFirstByPlayerAndEndDateIsNullOrderByStartDateDesc(player);
+
         if (optionalPersonJob.isPresent()) {
-            PersonJob personJob = optionalPersonJob.get();
-            Double newIncome = personJob.getHourlyWage() * personJob.getHoursPerWeek();
+            final var personJob = optionalPersonJob.get();
+            final var newIncome = personJob.getHourlyWage() * personJob.getHoursPerWeek();
             player.setBalance(player.getBalance() + newIncome);
+
             personJob.setYearsInJob(personJob.getYearsInJob() + 1);
             personJob.calculatePerformance();
+
             if (personJob.getPerformance() < 30) {
                 personJob.setEndDate(LocalDate.of(player.getCurrentYear(), 1, 1));
                 System.out.println("You're fired! Performance: " + personJob.getPerformance() + "%");
             }
+
+            // TODO: Implement balance symbol based on contry
             System.out.println("You earned " + newIncome + " in your job.");
             System.out.println("Current balance: R$" + player.getBalance());
             System.out.println("Current performance: " + personJob.getPerformance() + "%");
         }
     }
 
-    private void updateStats(Player player) {
-        int age = player.getAge();
+    private void updateStats() {
+        final int age = player.getAge();
 
         if (player.getHealth() <= 0) {
             player.setDead(true);
@@ -441,6 +458,6 @@ public class GameService {
         player.setHappyness(Math.max(0, Math.min(100, player.getHappyness() + ThreadLocalRandom.current().nextInt(-5, 6))));
         player.setHealth(Math.max(0, Math.min(100, player.getHealth() - ThreadLocalRandom.current().nextInt(0, 3))));
 
-        player.getStats();
+        player.printStats();
     }
 }

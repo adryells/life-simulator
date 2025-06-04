@@ -1,12 +1,19 @@
 package com.lifesimulator.lifesimulator.util;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Scanner;
 
+@Component
 public class ConsoleUniversityCourseSelector implements UniversityCourseSelector {
-    private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner;
+
+    ConsoleUniversityCourseSelector(final Scanner scanner){
+        this.scanner = scanner;
+    }
 
     @Override
-    public UniversityCourse selectCourse(UniversityCourse[] courses) {
+    public UniversityCourse selectCourse(final UniversityCourse[] courses) {
         System.out.println("Choose your course:");
         for (int i = 0; i < courses.length; i++) {
             System.out.println("[" + (i + 1) + "] " + courses[i]);
