@@ -1,10 +1,7 @@
 package com.lifesimulator.lifesimulator.services;
 
 import com.lifesimulator.lifesimulator.models.*;
-import com.lifesimulator.lifesimulator.repositories.CompanyRepository;
-import com.lifesimulator.lifesimulator.repositories.JobRepository;
-import com.lifesimulator.lifesimulator.repositories.PersonJobRepository;
-import com.lifesimulator.lifesimulator.repositories.PlayerRepository;
+import com.lifesimulator.lifesimulator.repositories.*;
 import com.lifesimulator.lifesimulator.util.ActionEvent;
 import com.lifesimulator.lifesimulator.util.Country;
 import com.lifesimulator.lifesimulator.util.Gender;
@@ -133,7 +130,7 @@ public class GameService {
         System.out.println("Would you like to load a saved game? [Y/N]");
         String loadChoice = scanner.nextLine();
 
-        // Must accept "yes" as valid answer
+        // Must accept "yes" as a valid answer
         if (loadChoice.equalsIgnoreCase("Y")) {
             loadPlayer();
         } else {
@@ -152,7 +149,8 @@ public class GameService {
             System.out.println("[1] - Age Up a Year");
             System.out.println("[2] - Go to actions");
             System.out.println("[3] - Go to work");
-            System.out.println("[4] - Exit");
+            System.out.println("[4] - Go shopping");
+            System.out.println("[5] - Exit");
 
             int choice = scanner.nextInt();
 
@@ -160,7 +158,8 @@ public class GameService {
                 case 1 -> ageUp();
                 case 2 -> goToActions();
                 case 3 -> goToWork();
-                case 4 -> {
+                case 4 -> goShopping();
+                case 5 -> {
                     System.out.println("Bye Bye, see you later!");
                     System.exit(SpringApplication.exit(applicationContext, () -> 1));
                 }
@@ -216,8 +215,9 @@ public class GameService {
         final var country = promptForCountry();
         final var birthDate = promptForBirthDate();
         final int startYear = birthDate.getYear();
+        final var initialHouse = HouseType.PARENTS_HOUSE;
 
-        player = new Player(name, birthDate, country, gender, startYear);
+        player = new Player(name, birthDate, country, gender, startYear, initialHouse);
         player.generateInitialStats();
 
         playerRepository.save(player);
@@ -350,7 +350,6 @@ public class GameService {
         }
     }
 
-
     private void goToApplicationArea() {
         generateJobsIfDoesntExists();
 
@@ -387,6 +386,44 @@ public class GameService {
         }
     }
 
+    private void goShopping() {
+        boolean inShoppingSection = true;
+
+        while (inShoppingSection) {
+            System.out.println("Select an option:");
+            System.out.println("[0] Exit");
+            System.out.println("[1] Rent a house");
+
+            int choice = readIntInput("Your choice: ");
+
+            switch (choice) {
+                case 0:
+                    inShoppingSection = false;
+                    break;
+                case 1:
+                    HouseType[] houseTypes = HouseType.values();
+
+                    System.out.println("Choose a house to rent:");
+                    for (int i = 0; i < houseTypes.length; i++) {
+                        System.out.println("[" + i + "] " + houseTypes[i] + " - Cost: " + houseTypes[i].getCost());
+                    }
+
+                    int houseChoice = readIntInput("Enter the index of the house: ");
+
+                    if (houseChoice >= 0 && houseChoice < houseTypes.length) {
+                        HouseType chosenHouseType = houseTypes[houseChoice];
+                        player.setHouseType(chosenHouseType);
+                        System.out.println("You rented: " + chosenHouseType + " for R$" + chosenHouseType.getCost());
+                    } else {
+                        System.out.println("Invalid index. Please try again.");
+                    }
+                    break;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
 
     private void generateJobsIfDoesntExists() {
         if (companyRepository.findByName("Test Company") == null){
@@ -408,8 +445,43 @@ public class GameService {
         playerRepository.save(player);
 
         updateWorkStats();
+        updateHomeStats();
         handleRandomEvents();
+        updateFinanceStats();
         updateStats();
+    }
+
+    private void updateHomeStats() {
+        int age = player.getAge();
+
+        if (age < 18) return;
+
+        final var houseType = player.getHouseType();
+
+        if (houseType == HouseType.PARENTS_HOUSE) {
+            System.out.println("You're too old to live with your parents! You're now homeless.");
+            player.setHouseType(null);
+            applyHomelessPenalties();
+            return;
+        }
+
+        if (houseType == null) {
+            applyHomelessPenalties();
+            return;
+        }
+
+        player.setBalance(player.getBalance() - houseType.getCost());
+        System.out.println(houseType.getCost() + "R$ from rent for " + houseType + " paid.");
+        System.out.println("Current balance: " + player.getBalance());
+    }
+
+    private void updateFinanceStats(){
+        if (player.getBalance() < 0){
+            System.out.println("Your balance is negative: R$" + player.getBalance());
+            System.out.println("Your attributes will decrease. ");
+            player.setStress(Math.min(100, player.getStress() + ThreadLocalRandom.current().nextInt(5, 10)));
+            player.setHappyness(Math.max(0, Math.min(100, player.getHappyness() + ThreadLocalRandom.current().nextInt(-5, -1))));
+        }
     }
 
     private void updateWorkStats(){
@@ -428,7 +500,7 @@ public class GameService {
                 System.out.println("You're fired! Performance: " + personJob.getPerformance() + "%");
             }
 
-            // TODO: Implement balance symbol based on contry
+            // TODO: Implement balance symbol based on country
             System.out.println("You earned " + newIncome + " in your job.");
             System.out.println("Current balance: R$" + player.getBalance());
             System.out.println("Current performance: " + personJob.getPerformance() + "%");
@@ -460,4 +532,12 @@ public class GameService {
 
         player.printStats();
     }
+
+    private void applyHomelessPenalties() {
+        System.out.println("If you're homeless, your attributes will decrease.");
+        player.setStress(Math.min(100, player.getStress() + ThreadLocalRandom.current().nextInt(5, 10)));
+        player.setHappyness(Math.max(0, Math.min(100, player.getHappyness() + ThreadLocalRandom.current().nextInt(-5, -1))));
+        player.setHealth(Math.max(0, Math.min(100, player.getHealth() - ThreadLocalRandom.current().nextInt(1, 5))));
+    }
+
 }

@@ -13,8 +13,8 @@ public class Player extends Person {
 
     public Player() {}
 
-    public Player(String name, LocalDate birth, Country country, Gender gender, int startYear) {
-        super(name, birth, country, gender);
+    public Player(String name, LocalDate birth, Country country, Gender gender, int startYear, HouseType houseType) {
+        super(name, birth, country, gender, houseType);
         this.currentYear = startYear;
     }
 

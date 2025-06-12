@@ -28,17 +28,19 @@ public class Person {
     private Integer beauty;
     private int stress;
     private boolean isDead;
+    private HouseType houseType;
     private Double balance; // TODO: Create bank account model? maybe.
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Education> educationHistory = new ArrayList<>();
 
     public Person() {}
 
-    public Person(String name, LocalDate birth, Country country, Gender gender) {
+    public Person(String name, LocalDate birth, Country country, Gender gender, HouseType houseType) {
         this.name = name;
         this.birth = birth;
         this.country = country;
         this.gender = gender;
+        this.houseType = houseType;
         this.iq = 50;
         this.beauty = 50;
         this.happyness = 50;
@@ -102,6 +104,14 @@ public class Person {
 
     public Double getBalance() {
         return balance;
+    }
+
+    public HouseType getHouseType() {
+        return houseType;
+    }
+
+    public void setHouseType(HouseType houseType) {
+        this.houseType = houseType;
     }
 
     public void setBalance(Double balance) {

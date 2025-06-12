@@ -1,9 +1,6 @@
 package com.lifesimulator.lifesimulator.services;
 
-import com.lifesimulator.lifesimulator.models.Person;
-import com.lifesimulator.lifesimulator.models.Player;
-import com.lifesimulator.lifesimulator.models.Relationship;
-import com.lifesimulator.lifesimulator.models.RelationshipType;
+import com.lifesimulator.lifesimulator.models.*;
 import com.lifesimulator.lifesimulator.repositories.PersonRepository;
 import com.lifesimulator.lifesimulator.repositories.RelationshipRepository;
 import com.lifesimulator.lifesimulator.repositories.RelationshipTypeRepository;
@@ -36,6 +33,11 @@ public class FamilyService {
         }
     }
 
+    // TODO: Move to HouseTypeService, UtilService or something like that
+    private static HouseType getRandomHouseType() {
+        return HouseType.values()[ThreadLocalRandom.current().nextInt(HouseType.values().length)];
+    }
+
     public void generateFamily(Player player) {
         final var faker = new Faker();
 
@@ -45,8 +47,9 @@ public class FamilyService {
         final int fatherAge = ThreadLocalRandom.current().nextInt(18, 71);
         LocalDate fatherBirth = subtractYearsRandomized(player.getBirth(), fatherAge);
 
-        final var mother = new Person(faker.name().fullName(), motherBirth, player.getCountry(), Gender.FEMALE);
-        final var father = new Person(faker.name().fullName(), fatherBirth, player.getCountry(), Gender.MALE);
+        final var houseType = getRandomHouseType();
+        final var mother = new Person(faker.name().fullName(), motherBirth, player.getCountry(), Gender.FEMALE, houseType);
+        final var father = new Person(faker.name().fullName(), fatherBirth, player.getCountry(), Gender.MALE, houseType);
 
         System.out.println("Mother: " + mother.getName() + " born in " + motherBirth);
         mother.generateInitialStats();
